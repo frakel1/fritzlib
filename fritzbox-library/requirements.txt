@@ -1,5 +1,0 @@
-requests
-tkinter
-xml.etree.ElementTree
-hashlib
-re
