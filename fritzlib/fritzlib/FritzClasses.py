@@ -7,6 +7,7 @@ from xml.etree import ElementTree
 from tkinter import messagebox
 import tkinter as tk
 import re
+from tkinter import messagebox
 from tkinter import ttk
 
 class Login_Error(Exception):
@@ -27,13 +28,13 @@ class terminationmessage:
         elif status == 1:
             self.icon = 'error'
         else:
-            raise ValueError('Status must be either 0 (Warning) or 1 (Error)')
+            raise ValueError('Status muss entweder 0 (Warnung) oder 1 (Fehler) sein')
 
         self.message = message
         self.create_messagebox()
 
     def create_messagebox(self):
-        messagebox.showwarning('Program Termination', self.message, icon=self.icon)
+        messagebox.showwarning('Programmabbruch', self.message, icon=self.icon)
 
 class trackingparameter:
     def __init__(self, list, devicename):
@@ -60,11 +61,16 @@ class trackingparameter:
         
         scrollbar.config(command=self.treeview.yview)
         
+        label_frame = tk.Frame(self.toplevel)
+        label_frame.pack(pady=(10,15))
+
+        self.treeview.bind('<<TreeviewSelect>>', self.rename_labels)
+
         button_frame = tk.Frame(self.toplevel)
         button_frame.pack(padx=10, pady=10, anchor='s')
         ok_button = tk.Button(button_frame, text="OK", command=self.ok)
         ok_button.grid(row=0, column=0, padx=10)
-        cancel_button = tk.Button(button_frame, text="Cancel", command=self.cancel)
+        cancel_button = tk.Button(button_frame, text="Abbrechen", command=self.cancel)
         cancel_button.grid(row=0, column=1, padx=10)
         
         self.toplevel.update_idletasks()
@@ -76,20 +82,23 @@ class trackingparameter:
 
         self.toplevel.wait_window(self.toplevel)
 
+    def rename_labels(self, event):
+        selected_tuple = [self.treeview.item(item)['values'][0] for item in self.treeview.selection()]
+
     def ok(self):
         selected_items = self.treeview.selection()
-        if not selected_items or len(selected_items) < 1:
-            messagebox.showerror("Error", "Please select 1 element in the list.")
+        if not selected_items or len(selected_items)<1:
+            messagebox.showerror("Error", "Please select 1 elements in list.")
             return
         else:
             try: 
                 selected_values = [self.treeview.item(item)['values'][0] for item in selected_items]
                 self.result = {
-                    'selected_values': selected_values,
-                    'ax1label': selected_values[0],
+                    'selected_values'   : selected_values,
+                    'ax1label'          : selected_values[0],
                 }
-            except Exception as e:
-                messagebox.showerror("Error", "Please make sure to use integer numbers." + str(e))
+            except Exception as e :
+                messagebox.showerror("Error", "Please make sure to use integer numbers." +  str(e))
                 return
  
         self.toplevel.destroy()
@@ -97,14 +106,14 @@ class trackingparameter:
     def cancel(self):
         self.result = None
         self.toplevel.destroy()
-
+        
 class fritzdevice:
     def __init__(self, ain, devdetail):
         self.ain = ain
         self.devdetail = devdetail
         self.allparams = self.xml_to_dict(devdetail)
         
-    def xml_to_dict(self, xmlelements, parenttag=""):
+    def xml_to_dict(self, xmlelements, parenttag = ""):
         if len(xmlelements) == 0:
             return xmlelements.text
         else:
@@ -126,7 +135,7 @@ class fritzdevice:
             try:
                 xmlstring = requests.get(queryurl).content
             except requests.exceptions.RequestException as e:
-                raise Communication_Error("Communication Error", -1)
+                raise Communication_Error("Communicaton Error", -1)
         except Communication_Error as ce:
             print(f"{ce.occurrence}: {ce.message} - {ce.error_code}")
             whatdo = ce.error_code
@@ -134,7 +143,7 @@ class fritzdevice:
             if whatdo == -1:
                 self.allparams = self.allparams
             else:
-                if xmlstring is not None:
+                if xmlstring != None:
                     xml = ElementTree.fromstring(xmlstring)
                     self.allparams = self.xml_to_dict(xml)
                 else:
@@ -165,7 +174,7 @@ class fritzbox:
         self.username = PWDialog.username
         self.password = PWDialog.password
         self.address = PWDialog.address
-        if self.username is None and self.password is None:
+        if self.username == None and self.password == None:
             terminationmessage(0, "Login cancelled!")
             raise Login_Error()
         self.loginurl = self.address + "//login_sid.lua"
@@ -173,7 +182,7 @@ class fritzbox:
         
         self.sid = fritzbox.get_sid(self.loginurl, self.username, self.password)
         if not self.sid:
-            terminationmessage(0, f'No connection to Fritzbox! SID = {self.sid}')
+            terminationmessage(0,f'No connection to Fritzbox! SID = {self.sid}')
             raise Login_Error()
         self.query_url = self.ahaurl + '?sid=' + self.sid
         self.devicebyname = {}
@@ -218,7 +227,7 @@ class fritzbox:
         return fail
     
     @classmethod
-    def get_sid(cls, loginurl, username, password):
+    def get_sid(fritzbox, loginurl, username, password):
         try:
             try:
                 response = requests.get(loginurl)
@@ -262,11 +271,11 @@ class logindialog:
         self.entry_frame = tk.Frame(self.toplevel)
         self.entry_frame.pack(pady=10)
 
-        self.username_label = tk.Label(self.entry_frame, text="Username")
-        self.username_entry = tk.Entry(self.entry_frame)
-        self.password_label = tk.Label(self.entry_frame, text="Password")
-        self.password_entry = tk.Entry(self.entry_frame, show="*")
-        self.address_label = tk.Label(self.entry_frame, text="Fritzbox Address\n\" http://xxx.xxx.xxx.xxx\"")
+        self.username_label = tk.Label(self.entry_frame , text="Nutzername")
+        self.username_entry = tk.Entry(self.entry_frame )
+        self.password_label = tk.Label(self.entry_frame , text="Passwort")
+        self.password_entry = tk.Entry(self.entry_frame , show="*")
+        self.address_label = tk.Label(self.entry_frame , text="Fritzbox Address\n\" http://xxx.xxx.xxx.xxx\"")
         self.address_entry = tk.Entry(self.entry_frame)
 
         self.username_label.grid(row=0, column=0, sticky='ew')
@@ -279,8 +288,8 @@ class logindialog:
         self.button_frame = tk.Frame(self.toplevel)
         self.button_frame.pack(pady=20)
 
-        self.login_button = tk.Button(self.button_frame, text="Login", command=self.login)
-        self.cancel_button = tk.Button(self.button_frame, text="Cancel", command=self.cancel)
+        self.login_button = tk.Button(self.button_frame, text="Einloggen", command=self.login)
+        self.cancel_button = tk.Button(self.button_frame, text="Abbrechen", command=self.cancel)
 
         self.login_button.pack(side='left')
         self.cancel_button.pack(side='left', padx=10)
@@ -345,9 +354,9 @@ class DeviceDialog:
         scrollbar = tk.Scrollbar(treeview_frame)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
-        self.treeview = ttk.Treeview(treeview_frame, columns=('Tuple 1', 'Tuple 2'), show='headings', yscrollcommand=scrollbar.set)
-        self.treeview.heading('Tuple 1', text='Name')
-        self.treeview.heading('Tuple 2', text='Identifier')
+        self.treeview = ttk.Treeview(treeview_frame, columns=('Tupel 1', 'Tupel 2'), show='headings', yscrollcommand=scrollbar.set)
+        self.treeview.heading('Tupel 1', text='Name')
+        self.treeview.heading('Tupel 2', text='Identifier')
 
         for t in tuples:
             self.treeview.insert('', 'end', values=t)
@@ -359,7 +368,7 @@ class DeviceDialog:
         button_frame.pack(padx=10, pady=10, anchor='s')
         ok_button = tk.Button(button_frame, text="OK", command=self.ok)
         ok_button.grid(row=0, column=0, padx=10)
-        cancel_button = tk.Button(button_frame, text="Cancel", command=self.cancel)
+        cancel_button = tk.Button(button_frame, text="Abbrechen", command=self.cancel)
         cancel_button.grid(row=0, column=1, padx=10)
         
         self.toplevel.update_idletasks()
@@ -374,7 +383,7 @@ class DeviceDialog:
     def ok(self):
         selected_items = self.treeview.selection()
         if not selected_items:
-            messagebox.showerror("Error", "Please select a tuple.")
+            messagebox.showerror("Fehler", "Bitte waehlen Sie ein Tupel aus.")
             return
         else:
             selected_item = selected_items[0]

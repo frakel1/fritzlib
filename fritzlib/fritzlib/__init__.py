@@ -1,15 +1,15 @@
-# This file initializes the fritzbox_library package.
-# It defines what is exported when the package is imported.
-
-from .fritz_classes import (
+from FritzClasses import (
     Login_Error,
     Communication_Error,
     terminationmessage,
     trackingparameter,
     fritzdevice,
     fritzbox,
+    logindialog,
+    DeviceDialog
 )
 
+# Definieren Sie __all__, um die öffentliche API des Pakets zu steuern
 __all__ = [
     "Login_Error",
     "Communication_Error",
@@ -17,4 +17,6 @@ __all__ = [
     "trackingparameter",
     "fritzdevice",
     "fritzbox",
+    "logindialog",
+    "DeviceDialog"
 ]
