@@ -1,1 +1,0 @@
-Implements OpenWindow functionality for heating by switch.
